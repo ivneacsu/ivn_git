@@ -6,6 +6,10 @@ ser = serial.Serial()
 ser.port = "/dev/ttyACM0"
 ser.baudrate = 9600
 ser.timeout = 1
+
+def test_serial():
+    pass
+
 try:
     ser.open()
 except Exception,e:
