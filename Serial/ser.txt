@@ -1,0 +1,418 @@
+https://i-systems.github.io/IoT/html/07_Arduino_with_Python_blank%20(2).html
+
+1.
+
+//Arduino:
+int ON = 0;
+const int pin = 8;
+void setup() {
+  pinMode(pin, OUTPUT);
+  Serial.begin(9600);
+}
+void loop() {    
+  if (Serial.available() > 0) {
+    ON = Serial.read();
+    if (ON == 1)
+      digitalWrite(pin, HIGH);
+    else if (ON == 0)
+      digitalWrite(pin, LOW);
+    Serial.println(ON);
+  }
+}
+
+## Python:
+ser.write(bytes([1]))
+ser.write(bytes([0]))
+ser.close()
+for i in range(10):
+    ser.write(bytes([1]))
+    time.sleep(0.5)
+    ser.write(bytes([0]))
+    time.sleep(0.5)
+ser.close()
+
+2.
+
+//Arduino:
+String LEDcmd = "";
+const int pin = 8;
+void setup() {
+  pinMode(pin, OUTPUT);
+  Serial.begin(9600);
+}
+void loop() {
+  if (Serial.available() > 0) {
+    LEDcmd = Serial.readStringUntil('\n');
+    if (LEDcmd == "ON")
+      digitalWrite(pin, HIGH);
+    else if (LEDcmd == "OFF")
+      digitalWrite(pin, LOW);
+  }
+}
+
+## Python:
+str('ON').encode('UTF-8')
+ser.write(str('ON\n').encode('UTF-8'))
+ser.write(str('OFF\n').encode('UTF-8'))
+ser.close()
+for i in range(10):
+    ser.write(str('ON\n').encode('UTF-8'))
+    time.sleep(0.5)
+    ser.write(str('OFF\n').encode('UTF-8'))
+    time.sleep(0.5)
+ser.close()
+
+3.
+
+//Arduino:
+int brightness = 0;
+const int pin = 8;
+void setup() {
+  pinMode(pin, OUTPUT);
+  Serial.begin(9600);  
+}
+void loop() {
+  if (Serial.available() > 0) {
+    brightness = Serial.read();
+    analogWrite(pin, brightness);
+  }
+}
+
+## Python:
+for i in range(255):
+    ser.write(bytes([i]))
+    time.sleep(0.1)
+for i in range(255):
+    ser.write(bytes([255-i])) 
+    time.sleep(0.1)      
+ser.close() 
+
+4.
+
+//Arduino:
+#include <LiquidCrystal.h>
+LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
+String LCDRead = "";
+void setup() {
+  lcd.begin(16, 2);
+  lcd.setCursor(0,0);
+  lcd.print("The current time");
+  Serial.begin(9600);
+}
+void loop() {
+  if (Serial.available()) {
+    LCDRead = Serial.readStringUntil('\n');
+    lcd.setCursor(0,1);
+    lcd.print(LCDRead);    
+  }
+}
+
+## Python:
+import serial
+import time
+from datetime import datetime
+ser = serial.Serial('COM18', 9600, timeout=1)
+print(datetime.now().strftime('%H:%M:%S'))
+ser.write((datetime.now().strftime('%H:%M:%S') + '\n').encode('UTF-8'))
+ser.close()
+
+import serial
+import time
+from datetime import datetime
+ser = serial.Serial('COM18', 9600, timeout=1)
+for i in range(15):
+    print(datetime.now().strftime('%H:%M:%S').encode('UTF-8'))
+    ser.write((datetime.now().strftime('%H:%M:%S') + '\n').encode('UTF-8'))
+    time.sleep(1)   
+ser.close()
+
+5.
+
+#### Current temperature on LCD Display from the internet
+//Arduino:
+#include <LiquidCrystal.h>
+LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
+String LEDRead = "";
+void setup() {  
+  lcd.begin(16,2);  
+  Serial.begin(9600);
+}
+void loop() {
+  if (Serial.available()) {
+    LEDRead = Serial.readStringUntil('\n');
+    lcd.clear();
+    lcd.setCursor(0,0);
+    lcd.print("Temperature in");
+    lcd.setCursor(0,1);
+    lcd.print("Ulsan: ");
+    lcd.setCursor(7,1);
+    lcd.print(LEDRead);
+    lcd.setCursor(9,1);
+    lcd.print("Degrees");
+  }
+}
+
+#### Current temperature on LCD Display from the internet
+## Python:
+import serial
+import time
+ser = serial.Serial('COM14', 9600, timeout=1)
+from bs4 import BeautifulSoup
+from urllib.request import Request, urlopen
+url = 'https://www.google.co.kr/search?q=ulsan+temperature'
+req = Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+html = urlopen(req).read()
+soup = BeautifulSoup(html, 'html.parser')
+result = soup.find_all('span', 'wob_t')
+for i in range(len(result)):
+    print(result[i].text)    
+ser.write(str(result[0].text[:-2]).encode('utf-8'))
+
+
+#### SERVO
+// Arduino:
+#include <Servo.h>
+Servo myservo;
+const int pin = 9;
+int pos = 0;
+void setup() {
+  myservo.attach(pin);
+  myservo.write(0);
+  Serial.begin(9600);
+}
+void loop() {
+  if (Serial.available() > 0) {
+    pos = Serial.read();
+    myservo.write(pos);
+    delay(50);
+  }
+}
+
+#### SERVO
+## Python:
+ser.write(bytes([90]))
+ser.write(bytes([180]))
+ser.close()
+ser = serial.Serial('COM18', 9600, timeout=1)
+for angle in range(0,180):
+    ser.write(bytes([angle]))
+    time.sleep(0.1)    
+for angle in range(180,0,-1):
+    ser.write(bytes([angle]))
+    time.sleep(0.1)   
+ser.close()
+
+import serial
+import time
+def move(angle):
+    if (0 <= angle <= 180):
+        ser.write(bytes([angle]))
+    else:
+        print("Servo angle must be an integer between 0 and 180.\n")
+ser = serial.Serial('COM18', 9600, timeout=1)
+print("The initial servo angle is 30, type 'end' if you want to stop")
+while 1:
+    angle = input("Enter your angle: ")
+    if angle == "end":
+        print("Finished")
+        ser.close()
+        break
+    else:
+        try:
+            move(int(angle))
+            print("The current servo angle is " + angle)
+        except:
+            print("Improper input")
+
+
+#### STREAMING
+#### Plotting Saved Data in Buffer from Arduino
+// Arduino:
+...
+  //Prints values on Serial
+  Serial.print(AcX);
+  Serial.print(","); 
+  Serial.print(AcY);
+  Serial.print(","); 
+  Serial.println(AcZ);
+  delay(20);
+
+## Python:
+import serial          
+import numpy as np     
+import matplotlib.pyplot as plt 
+%matplotlib qt
+ser = serial.Serial('COM4',9600)   
+Accx = []
+Accy = []
+Accz = []
+len = 51
+for i in range (len):
+    while (ser.inWaiting() == 0):   
+        pass                                
+    arduinoString = ser.readline().decode("utf-8") #.strip()    
+    dataArray = (arduinoString.split(','))                                               
+    temp1 = float(dataArray[0])             
+    temp2 = float(dataArray[1]) 
+    temp3 = float(dataArray[2])   
+    Accx.append(temp1)                      
+    Accy.append(temp2)                      
+    Accz.append(temp3)
+print(Accx)    
+
+plt.figure(1)
+plt.subplot(311)                    
+plt.title('Saved data') 
+plt.grid(True)
+plt.ylabel('Acceleration')
+plt.plot(Accx, 'bo-', label='X')
+plt.legend(loc='upper left') 
+    
+plt.subplot(312)
+plt.grid(True)
+plt.ylabel('Acceleration')
+plt.plot(Accy, 'ro-', label='Y') 
+plt.legend(loc='upper left')          
+    
+plt.subplot(313) 
+plt.grid(True)
+plt.ylabel('Acceleration')
+plt.plot(Accz, 'go-', label='Z')
+plt.legend(loc='upper left')          
+plt.show()
+ser.close()
+
+#### Plotting Steaming Data from Arduino
+// Arduino:
+...
+//Prints values on Serial
+  Serial.print(AcX);
+  Serial.print(","); 
+  Serial.print(AcY);
+  Serial.print(","); 
+  Serial.println(AcZ);
+  delay(50);
+
+#### Plotting Steaming Data from Arduino
+## Python:
+import serial
+import numpy as np
+from matplotlib import pyplot as plt
+from matplotlib import animation
+% matplotlib qt
+ser = serial.Serial('COM4', 9600)
+n = 201
+fig = plt.figure(figsize=(12, 6))
+ax = plt.axes(xlim=(0,n-1), ylim=(-2, 2))
+plt.title('Real-time sensor data')
+plt.xlabel('Data points')
+plt.ylabel('Acceleration [G]')
+ax.grid(True)
+graphX, = ax.plot([], [], 'b', label = 'X')
+graphY, = ax.plot([], [], 'r', label = 'Y')
+graphZ, = ax.plot([], [], 'g', label = 'Z')
+ax.legend(loc='upper right')
+t = list(range(0, n))
+accX = [0] * n
+accY = [0] * n
+accZ = [0] * n
+def init():
+    graphX.set_data([], [])
+    graphY.set_data([], [])
+    graphZ.set_data([], [])
+    return graphX, graphY, graphZ,
+def animate(i):
+    while (ser.inWaiting() == 0):
+        pass
+    arduinoString = ser.readline().decode("utf-8")
+    dataArray = arduinoString.split(',')
+    accX.append(float(dataArray[0])/(32767/2))    
+    accY.append(float(dataArray[1])/(32767/2))    
+    accZ.append(float(dataArray[2])/(32767/2))
+    accX.pop(0)
+    accY.pop(0)
+    accZ.pop(0)
+    graphX.set_data(t, accX)
+    graphY.set_data(t, accY)
+    graphZ.set_data(t, accZ)
+    return graphX, graphY, graphZ,
+delay = 0
+anim = animation.FuncAnimation(fig, animate, init_func=init interval=delay, blit=True)
+plt.show()
+ser.close()
+
+#### Subplot
+import serial
+import numpy as np
+from matplotlib import pyplot as plt
+from matplotlib import animation
+ser = serial.Serial('COM4', 9600)
+n = 201
+fig = plt.figure(figsize=(12, 9))
+ax1 = fig.add_subplot(3, 1, 1)
+ax2 = fig.add_subplot(3, 1, 2)
+ax3 = fig.add_subplot(3, 1, 3)
+graphX, = ax1.plot([], [], 'b', label = 'X')
+graphY, = ax2.plot([], [], 'r', label = 'Y')
+graphZ, = ax3.plot([], [], 'g', label = 'Z')
+axes = [ax1, ax2, ax3]
+for ax in axes:
+    ax.set_xlim(0, n-1)
+    ax.set_ylim(-2, 2)
+    ax.set_ylabel('Acceleration [G]')
+    ax.legend(loc='upper right')
+    ax.grid(True)
+ax1.set_title('Real-time sensor data')
+ax3.set_xlabel('Data points')   
+t = list(range(0, n))
+accX = [0] * n
+accY = [0] * n
+accZ = [0] * n
+def init():
+    graphX.set_data([], [])
+    graphY.set_data([], [])
+    graphZ.set_data([], [])
+    return graphX, graphY, graphZ,
+def animate(i):
+    while (ser.inWaiting() == 0):
+        pass
+    arduinoString = ser.readline().decode("utf-8")
+    dataArray = arduinoString.split(',')
+    accX.append(float(dataArray[0])/(32767/2))    
+    accY.append(float(dataArray[1])/(32767/2))    
+    accZ.append(float(dataArray[2])/(32767/2))
+    accX.pop(0)
+    accY.pop(0)
+    accZ.pop(0)
+    graphX.set_data(t, accX)
+    graphY.set_data(t, accY)
+    graphZ.set_data(t, accZ)
+    return graphX, graphY, graphZ,
+delay = 0
+anim = animation.FuncAnimation(fig, animate, init_func=init,interval=delay, blit=True)
+plt.show()
+ser.close()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

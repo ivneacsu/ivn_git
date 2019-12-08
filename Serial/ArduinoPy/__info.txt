@@ -1,0 +1,6 @@
+arduino_serial.py:
+python2 Ok!
+python3 , partial tested
+
+cli:
+cat /dev/ttyACM0
